@@ -58,27 +58,99 @@ function getPostsList(req, res) {
 }
 
 function getPost(req, res) {
-        return models.posts.findOne({ where: { id: req.params.id } }).then(post => {
+    return models.posts.findOne({ where: { id: req.params.id } }).then(post => {
+        if (post) {
+            res.status(200).json({
+                message: 'Post fetched succeesfully',
+                post: post
+            })
+        } else {
+            res.status(500).json({
+                message: 'Something Went Wrong'
+            });
+        }
+    }).catch(err => {
+        res.status(500).json({
+            message: 'Something Went Wrong',
+            error: err
+        });
+    });
+}
+
+function updatePost(req, res) {
+    const authHeader = req.headers['authorization'];
+    const accessToken = authHeader && authHeader.split(' ')[1];
+    var decoded = jwt.decode(accessToken);
+    if (decoded !== null) {
+        return models.posts.findOne({ where: { id: req.params.id, userId: decoded.userId }, limit: 1 }).then(post => {
             if (post) {
-                res.status(200).json({
-                    message: 'Post fetched succeesfully',
-                    post: post
-                })
+                return post.update({
+                    title: req.body.title,
+                    discription: req.body.discription,
+                    keywords: req.body.keywords
+                }).then(response => {
+                    res.status(200).json({
+                        message: 'Update successful',
+                        response: response
+                    });
+                }).catch(err => {
+                    res.status(500).json({
+                        message: 'Something went wrong',
+                        err: err
+                    });
+                });
             } else {
                 res.status(500).json({
-                    message: 'Something Went Wrong'
+                    message: 'Something went wrong'
                 });
             }
         }).catch(err => {
             res.status(500).json({
-                message: 'Something Went Wrong',
-                error: err
+                message: 'Something went wrong',
+                err: err
             });
         });
+    } else {
+        res.status(401).json({
+            message: 'Unauthorized'
+        });
+    }
+}
+
+function deletePost(req, res) {
+    const authHeader = req.headers['authorization'];
+    const accessToken = authHeader && authHeader.split(' ')[1];
+    var decoded = jwt.decode(accessToken);
+    if (decoded !== null) {
+        return models.posts.destroy({ where: { id: req.params.id, userId: decoded.userId }, limit: 1 }).then(post => {
+            if (post) {
+                res.status(200).json({
+                    message: 'Update successful',
+                    response: post
+                });
+            } else {
+                res.status(500).json({
+                    message: 'Something went wrong',
+                    response: post
+                });
+            }
+        }).catch(err => {
+            res.status(500).json({
+                message: 'Something went wrong',
+                err: err
+            });
+        });
+    } else {
+        res.status(401).json({
+            message: 'Unauthorized'
+        });
+    }
 }
 
 module.exports = {
     submitPosts,
     getPostsList,
-    getPost
+    getPost,
+    updatePost,
+    deletePost
 }
