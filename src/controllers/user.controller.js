@@ -118,19 +118,6 @@ function saveRefreshToken(email, refreshToken) {
             return user.update({
                 refreshToken: refreshToken
             })
-            // .then(response => {
-            //     // console.log("response");
-            //     // console.log(response);
-            //     // console.log("response");
-
-            //     return response;
-            // }).catch(err => {
-            //     // console.log("err");
-            //     // console.log(err);
-            //     // console.log("err");
-
-            //     return err;
-            // });
         } else {
             return 'Invalid email';
         }

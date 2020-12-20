@@ -12,7 +12,7 @@ function submitPosts(req, res) {
         status: req.body.status,
         keywords: req.body.keywords,
         categoryId: req.body.categoryId,
-        userId: req.body.userId
+        userId: req.user.userId
     };
     models.posts.create(postData).then(result => {
         res.status(201).json({
@@ -58,23 +58,33 @@ function getPostsList(req, res) {
 }
 
 function getPost(req, res) {
-    return models.posts.findOne({ where: { id: req.params.id } }).then(post => {
-        if (post) {
-            res.status(200).json({
-                message: 'Post fetched succeesfully',
-                post: post
-            })
-        } else {
+    const authHeader = req.headers['authorization'];
+    const accessToken = authHeader && authHeader.split(' ')[1];
+    var decoded = jwt.decode(accessToken);
+    if (decoded !== null) {
+        return models.posts.findOne({ where: { id: req.params.id, userId: decoded.userId } }).then(post => {
+            if (post) {
+                res.status(200).json({
+                    message: 'Post fetched succeesfully',
+                    post: post
+                })
+            } else {
+                res.status(200).json({
+                    message: 'No data for the user',
+                    post: post
+                });
+            }
+        }).catch(err => {
             res.status(500).json({
-                message: 'Something Went Wrong'
+                message: 'Something Went Wrong',
+                error: err
             });
-        }
-    }).catch(err => {
-        res.status(500).json({
-            message: 'Something Went Wrong',
-            error: err
         });
-    });
+    } else {
+        res.status(401).json({
+            message: 'Unauthorized'
+        });
+    }
 }
 
 function updatePost(req, res) {
