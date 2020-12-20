@@ -27,140 +27,149 @@ function submitPosts(req, res) {
     });
 }
 
-function getPostsList(req, res) {
-    const authHeader = req.headers['authorization'];
-    const accessToken = authHeader && authHeader.split(' ')[1];
-    var decoded = jwt.decode(accessToken);
-    console.log("User id " + decoded);
-    if (decoded !== null) {
-        return models.posts.findAll({ where: { userId: decoded.userId } }).then(post => {
-            if (post) {
-                res.status(200).json({
-                    message: 'Posts fetched succeesfully',
-                    postList: post
-                })
-            } else {
-                res.status(403).json({
-                    message: 'Forbidden'
-                });
-            }
-        }).catch(err => {
-            res.status(500).json({
-                message: 'Something Went Wrong',
-                error: err
+function getMyPostsList(req, res) {
+    return models.posts.findAll({ where: { userId: req.user.userId } }).then(post => {
+        if (post) {
+            res.status(200).json({
+                message: 'Posts fetched succeesfully',
+                postList: post
+            })
+        } else {
+            res.status(200).json({
+                message: 'No posts yet',
+                postList: post
             });
+        }
+    }).catch(err => {
+        res.status(500).json({
+            message: 'Something Went Wrong',
+            error: err
         });
-    } else {
-        res.status(401).json({
-            message: 'Unauthorized'
+    });
+}
+
+function getMyPost(req, res) {
+    return models.posts.findOne({ where: { id: req.params.id, userId: req.user.userId } }).then(post => {
+        if (post) {
+            res.status(200).json({
+                message: 'Post fetched succeesfully',
+                post: post
+            })
+        } else {
+            res.status(200).json({
+                message: 'No data for the user',
+                post: post
+            });
+        }
+    }).catch(err => {
+        res.status(500).json({
+            message: 'Something Went Wrong',
+            error: err
         });
-    }
+    });
+}
+
+function updateMyPost(req, res) {
+    return models.posts.findOne({ where: { id: req.params.id, userId: req.user.userId }, limit: 1 }).then(post => {
+        if (post) {
+            return post.update({
+                title: req.body.title,
+                discription: req.body.discription,
+                keywords: req.body.keywords
+            }).then(response => {
+                res.status(200).json({
+                    message: 'Update successful',
+                    response: response
+                });
+            }).catch(err => {
+                res.status(500).json({
+                    message: 'Something went wrong',
+                    err: err
+                });
+            });
+        } else {
+            res.status(200).json({
+                message: 'No post',
+                response: post
+            });
+        }
+    }).catch(err => {
+        res.status(500).json({
+            message: 'Something went wrong',
+            err: err
+        });
+    });
+}
+
+function deleteMyPost(req, res) {
+    return models.posts.destroy({ where: { id: req.params.id, userId: req.user.userId }, limit: 1 }).then(post => {
+        if (post) {
+            res.status(200).json({
+                message: 'Update successful',
+                response: post
+            });
+        } else {
+            res.status(200).json({
+                message: 'No post',
+                response: post
+            });
+        }
+    }).catch(err => {
+        res.status(500).json({
+            message: 'Something went wrong',
+            err: err
+        });
+    });
+}
+
+function getAllPostsList(req, res) {
+    return models.posts.findAll().then(post => {
+        if (post) {
+            res.status(200).json({
+                message: 'Posts fetched succeesfully',
+                postList: post
+            })
+        } else {
+            res.status(200).json({
+                message: 'No post yet',
+                postList: post
+            });
+        }
+    }).catch(err => {
+        res.status(500).json({
+            message: 'Something Went Wrong',
+            error: err
+        });
+    });
 }
 
 function getPost(req, res) {
-    const authHeader = req.headers['authorization'];
-    const accessToken = authHeader && authHeader.split(' ')[1];
-    var decoded = jwt.decode(accessToken);
-    if (decoded !== null) {
-        return models.posts.findOne({ where: { id: req.params.id, userId: decoded.userId } }).then(post => {
-            if (post) {
-                res.status(200).json({
-                    message: 'Post fetched succeesfully',
-                    post: post
-                })
-            } else {
-                res.status(200).json({
-                    message: 'No data for the user',
-                    post: post
-                });
-            }
-        }).catch(err => {
-            res.status(500).json({
-                message: 'Something Went Wrong',
-                error: err
+    return models.posts.findOne({ where: { id: req.params.id } }).then(post => {
+        if (post) {
+            res.status(200).json({
+                message: 'Post fetched succeesfully',
+                post: post
+            })
+        } else {
+            res.status(200).json({
+                message: 'No data',
+                post: post
             });
+        }
+    }).catch(err => {
+        res.status(500).json({
+            message: 'Something Went Wrong',
+            error: err
         });
-    } else {
-        res.status(401).json({
-            message: 'Unauthorized'
-        });
-    }
-}
-
-function updatePost(req, res) {
-    const authHeader = req.headers['authorization'];
-    const accessToken = authHeader && authHeader.split(' ')[1];
-    var decoded = jwt.decode(accessToken);
-    if (decoded !== null) {
-        return models.posts.findOne({ where: { id: req.params.id, userId: decoded.userId }, limit: 1 }).then(post => {
-            if (post) {
-                return post.update({
-                    title: req.body.title,
-                    discription: req.body.discription,
-                    keywords: req.body.keywords
-                }).then(response => {
-                    res.status(200).json({
-                        message: 'Update successful',
-                        response: response
-                    });
-                }).catch(err => {
-                    res.status(500).json({
-                        message: 'Something went wrong',
-                        err: err
-                    });
-                });
-            } else {
-                res.status(500).json({
-                    message: 'Something went wrong'
-                });
-            }
-        }).catch(err => {
-            res.status(500).json({
-                message: 'Something went wrong',
-                err: err
-            });
-        });
-    } else {
-        res.status(401).json({
-            message: 'Unauthorized'
-        });
-    }
-}
-
-function deletePost(req, res) {
-    const authHeader = req.headers['authorization'];
-    const accessToken = authHeader && authHeader.split(' ')[1];
-    var decoded = jwt.decode(accessToken);
-    if (decoded !== null) {
-        return models.posts.destroy({ where: { id: req.params.id, userId: decoded.userId }, limit: 1 }).then(post => {
-            if (post) {
-                res.status(200).json({
-                    message: 'Update successful',
-                    response: post
-                });
-            } else {
-                res.status(500).json({
-                    message: 'Something went wrong',
-                    response: post
-                });
-            }
-        }).catch(err => {
-            res.status(500).json({
-                message: 'Something went wrong',
-                err: err
-            });
-        });
-    } else {
-        res.status(401).json({
-            message: 'Unauthorized'
-        });
-    }
+    });
 }
 
 module.exports = {
     submitPosts,
-    getPostsList,
-    getPost,
-    updatePost,
-    deletePost
+    getMyPostsList,
+    getMyPost,
+    updateMyPost,
+    deleteMyPost,
+    getAllPostsList,
+    getPost
 }
