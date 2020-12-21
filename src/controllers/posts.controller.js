@@ -4,6 +4,7 @@ const debug = require('debug')('server');
 const chalk = require('chalk');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv').config();
+const Validator = require("fastest-validator");
 
 function submitPosts(req, res) {
     let postData = {
@@ -14,6 +15,27 @@ function submitPosts(req, res) {
         categoryId: req.body.categoryId,
         userId: req.user.userId
     };
+
+    const schema = {
+        title: { type: "string", optional: false, min: 3, max: 300 },
+        discription: { type: "string", optional: false },
+        status: { type: "string", optional: false },
+        keywords: { type: "string", optional: false },
+        categoryId: { type: "number", optional: false },
+        userId: { type: "number", optional: false }
+    };
+
+    const v = new Validator();
+
+    const validatorResponse = v.validate(postData, schema);
+
+    if (validatorResponse !== true) {
+        return res.status(400).json({
+            message: "Validation failed",
+            errors: validatorResponse
+        });
+    }
+
     models.posts.create(postData).then(result => {
         res.status(201).json({
             message: 'Post created',
@@ -72,11 +94,31 @@ function getMyPost(req, res) {
 function updateMyPost(req, res) {
     return models.posts.findOne({ where: { id: req.params.id, userId: req.user.userId }, limit: 1 }).then(post => {
         if (post) {
-            return post.update({
+
+            let postData = {
                 title: req.body.title,
                 discription: req.body.discription,
                 keywords: req.body.keywords
-            }).then(response => {
+            };
+
+            const schema = {
+                title: { type: "string", optional: false, min: 3, max: 300 },
+                discription: { type: "string", optional: false },
+                keywords: { type: "string", optional: false }
+            };
+        
+            const v = new Validator();
+        
+            const validatorResponse = v.validate(postData, schema);
+        
+            if (validatorResponse !== true) {
+                return res.status(400).json({
+                    message: "Validation failed",
+                    errors: validatorResponse
+                });
+            }
+
+            return post.update(postData).then(response => {
                 res.status(200).json({
                     message: 'Update successful',
                     response: response

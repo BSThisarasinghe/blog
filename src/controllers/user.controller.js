@@ -4,6 +4,7 @@ const debug = require('debug')('server');
 const chalk = require('chalk');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv').config();
+const Validator = require("fastest-validator");
 
 function postUsers(req, res) {
 
@@ -24,8 +25,25 @@ function postUsers(req, res) {
                         name: req.body.name,
                         email: req.body.email,
                         password: hash,
-                        status: 0
+                        status: 1
                     };
+
+                    const schema = {
+                        name: { type: "string", optional: false, min: 3, max: 100 },
+                        email: { type: "string", optional: false, min: 3, max: 100 },
+                        password: { type: "string", optional: false, min: 6 }
+                    };
+
+                    const v = new Validator();
+
+                    const validatorResponse = v.validate(user, schema);
+
+                    if (validatorResponse !== true) {
+                        return res.status(400).json({
+                            message: "Validation failed",
+                            errors: validatorResponse
+                        });
+                    }
 
                     models.users.create(user).then(result => {
                         res.status(201).json({
