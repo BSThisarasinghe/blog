@@ -8,7 +8,7 @@ const Validator = require("fastest-validator");
 
 function postUsers(req, res) {
 
-    models.users.findOne({ where: { email: req.body.email }, limit: 1 }).then(user => {
+    models.users.findOne({ where: { email: typeof req.body.email !== 'undefined' ? req.body.email : '' }, limit: 1 }).then(user => {
         if (user) {
             return res.status(409).json({
                 message: "The email already exists"
@@ -30,7 +30,7 @@ function postUsers(req, res) {
 
                     const schema = {
                         name: { type: "string", optional: false, min: 3, max: 100 },
-                        email: { type: "string", optional: false, min: 3, max: 100 },
+                        email: { type: "email", optional: false, min: 3, max: 100 },
                         password: { type: "string", optional: false, min: 6 }
                     };
 
