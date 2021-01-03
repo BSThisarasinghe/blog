@@ -71,7 +71,7 @@ function getMyPostsList(req, res) {
 }
 
 function getMyPost(req, res) {
-    return models.posts.findOne({ where: { id: req.params.id, userId: req.user.userId } }).then(post => {
+    return models.posts.findOne({ where: { id: req.params.id, userId: req.user.userId }, include: models.comments }).then(post => {
         if (post) {
             res.status(200).json({
                 message: 'Post fetched succeesfully',
